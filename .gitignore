@@ -17,7 +17,6 @@ build/
 .venv/
 venv/
 ENV/
-.env
 .poetry-cache/
 
 # Log files
