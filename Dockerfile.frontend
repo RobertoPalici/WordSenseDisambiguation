@@ -1,0 +1,45 @@
+FROM python:3.9-slim-bullseye AS builder
+
+# Install system dependencies required for building packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry==1.4.2
+
+# Set working directory
+WORKDIR /app
+
+# Copy only dependency files first
+COPY pyproject.toml poetry.lock* ./
+
+# Configure poetry to not use a virtual environment and create wheels
+RUN poetry config virtualenvs.create false \
+    && poetry export -f requirements.txt --without-hashes > requirements.txt
+
+# Final stage
+FROM python:3.9-slim-bullseye
+
+WORKDIR /app
+
+# Copy requirements from builder stage
+COPY --from=builder /app/requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY ./src ./src
+COPY run_frontend.py ./
+COPY .env ./
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV API_URL=http://backend:8000
+
+EXPOSE 8501
+
+ENTRYPOINT ["python", "run_frontend.py"]

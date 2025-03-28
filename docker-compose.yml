@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wsd-backend
+    environment:
+      - TEPROLIN_URL=http://teprolin:5000
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - ENVIRONMENT=production
+      - DEBUG=False
+    ports:
+      - "8000:8000"
+    networks:
+      - wsd-network
+    # depends_on:
+      # teprolin:
+        # condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend Streamlit service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: wsd-frontend
+    environment:
+      - API_URL=http://backend:8000
+    ports:
+      - "8501:8501"
+    networks:
+      - wsd-network
+    restart: unless-stopped
+
+
+  # Teprolin NLP service
+  # teprolin:
+  #   image: racai/teprolin:latest
+  #   container_name: teprolin-service
+  #   ports:
+  #     - "5000:5000"
+  #   networks:
+  #     - wsd-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
+  #   volumes:
+  #     - teprolin-data:/home/teprolin/.teprolin
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+
+networks:
+  wsd-network:
+    driver: bridge
+    name: wsd-network
+
+# volumes:
+#   teprolin-data:
+#     driver: local 
