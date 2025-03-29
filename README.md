@@ -1,5 +1,7 @@
 # Word Sense Disambiguation with Teprolin
 
+PROBLEMS: Teprolin Ner not working don't know why ?
+
 This project uses Teprolin, a text processing platform for Romanian language, to detect and disambiguate ambiguous words in a given text. The system analyzes input text, identifies potentially ambiguous words, and provides explanations about different possible meanings based on context.
 
 ## Project Structure

@@ -38,30 +38,24 @@ services:
 
 
   # Teprolin NLP service
-  # teprolin:
-  #   image: racai/teprolin:latest
-  #   container_name: teprolin-service
-  #   ports:
-  #     - "5000:5000"
-  #   networks:
-  #     - wsd-network
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 40s
-  #   volumes:
-  #     - teprolin-data:/home/teprolin/.teprolin
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
+  teprolin:
+    image: raduion/teprolin:1.1
+    container_name: teprolin-service
+    ports:
+      - "5000:5000"
+    networks:
+      - wsd-network
+    restart: unless-stopped
+    volumes:
+      - teprolin-data:/home/teprolin/.teprolin
+    environment:
+      - PYTHONUNBUFFERED=1
 
 networks:
   wsd-network:
     driver: bridge
     name: wsd-network
 
-# volumes:
-#   teprolin-data:
-#     driver: local 
+volumes:
+  teprolin-data:
+    driver: local 
