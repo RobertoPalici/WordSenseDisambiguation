@@ -1,8 +1,9 @@
 import os
 import requests
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 import streamlit as st
+import pandas as pd
 
 # Configure the app
 st.set_page_config(
@@ -18,6 +19,10 @@ API_URL = os.getenv("API_URL", "http://localhost:8000")
 # Initialize session state for text input if it doesn't exist
 if 'text_input' not in st.session_state:
     st.session_state.text_input = ""
+
+# Initialize session states for storing results
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = None
 
 def set_example_text():
     """Set example text in session state"""
@@ -89,57 +94,27 @@ def main():
         placeholder="Introduceți aici un text pentru a analiza sensurile cuvintelor...",
     )
     
-    # Analysis options
-    with st.expander("Opțiuni de analiză"):
-        col1, col2 = st.columns(2)
-        with col1:
-            confidence_threshold = st.slider(
-                "Pragul de încredere",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.5,
-                step=0.05,
-                help="Scorul minim de încredere pentru afișarea rezultatelor",
-            )
-        with col2:
-            max_senses = st.slider(
-                "Număr maxim de sensuri per cuvânt",
-                min_value=1,
-                max_value=10,
-                value=3,
-                step=1,
-                help="Numărul maxim de sensuri de afișat per cuvânt",
-            )
-    
-    # Show information about the analysis options
-    st.info(
-        """
-        **Pragul de încredere**: Valorile mai mari afișează doar rezultate cu încredere mai mare.
-        **Număr maxim de sensuri**: Numărul maxim de sensuri alternative afișate per cuvânt.
-        """
-    )
+    # Function to run analysis and store results in session state
+    def run_analysis():
+        with st.spinner("Se analizează textul..."):
+            try:
+                # Send request to API
+                result = analyze_text(text_input)
+                # Store in session state
+                st.session_state.analysis_results = result
+            except Exception as e:
+                st.error(f"Eroare la analizarea textului: {str(e)}")
 
     # Analyze button
     if st.button("Analizează textul", type="primary", disabled=not api_status.get("connected", False) or not text_input):
         if text_input:
-            with st.spinner("Se analizează textul..."):
-                try:
-                    # Send request to API
-                    result = analyze_text(
-                        text_input, 
-                        {
-                            "confidence_threshold": confidence_threshold,
-                            "max_senses": max_senses
-                        }
-                    )
-                    
-                    # Display results
-                    display_results(result)
-                    
-                except Exception as e:
-                    st.error(f"Eroare la analizarea textului: {str(e)}")
+            run_analysis()
         else:
             st.warning("Vă rugăm să introduceți un text pentru analiză.")
+    
+    # Display results if available
+    if st.session_state.analysis_results:
+        display_results(st.session_state.analysis_results)
 
 
 def check_detailed_api_status() -> Dict[str, Any]:
@@ -156,21 +131,18 @@ def check_detailed_api_status() -> Dict[str, Any]:
         return {"connected": False, "error": str(e)}
 
 
-def analyze_text(text: str, options: Dict[str, Any] = None) -> Dict[str, Any]:
+def analyze_text(text: str) -> Dict[str, Any]:
     """
     Send text to API for analysis
     
     Args:
         text: Text to analyze
-        options: Analysis options
         
     Returns:
         Analysis results
     """
-    options = options or {}
     data = {
         "text": text,
-        "options": options
     }
     
     response = requests.post(
@@ -184,41 +156,149 @@ def analyze_text(text: str, options: Dict[str, Any] = None) -> Dict[str, Any]:
 
 
 def display_results(result: Dict[str, Any]):
-    st.subheader("Rezultate")
+    """
+    Display disambiguation results
+    
+    Args:
+        result: The API response containing the disambiguation results
+    """
+    st.subheader("Rezultatele Analizei")
     
     # Processing stats
-    st.text(f"Timp de procesare: {result.get('processing_time', 0):.3f} secunde")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(
+            "Timp total de procesare", 
+            f"{result.get('total_execution_time', 0):.3f} sec"
+        )
+    with col2:
+        st.metric(
+            "Timp de îmbogățire (OpenAI)", 
+            f"{result.get('enrichment_time', 0):.3f} sec"
+        )
     
-    # Display processed text
-    st.subheader("Text procesat")
-    st.write(result.get("processed_text", ""))
+    # Display original text
+    st.subheader("Textul Original")
+    st.write(result.get("text", ""))
     
-    # Display disambiguated words
-    st.subheader("Cuvinte dezambiguizate")
+    # Display ambiguous words
+    ambiguous_words = result.get("ambiguous_words", [])
     
-    disambiguated_words = result.get("disambiguated_words", [])
-    
-    if not disambiguated_words:
-        st.info("Nu au fost găsite cuvinte dezambiguizate în text.")
+    if not ambiguous_words:
+        st.info("Nu au fost găsite cuvinte ambigue în text.")
         return
     
-    # Create columns for word information
-    for word_info in disambiguated_words:
-        with st.expander(f"{word_info.get('word')} → {word_info.get('lemma')}"):
-            st.markdown(f"**Poziție:** {word_info.get('position')}")
+    st.subheader(f"Cuvinte Ambigue Detectate ({len(ambiguous_words)})")
+    
+    # Create a metrics overview
+    metrics_data = []
+    for word_data in ambiguous_words:
+        metrics_data.append({
+            "Cuvânt": word_data.get("word", ""),
+            "POS": format_pos(word_data.get("pos", "")),
+            "Scor Ambiguitate": f"{word_data.get('ambiguity_score', 0):.2f}",
+            "Sensuri": len(word_data.get("top_meanings", [])) + len(word_data.get("other_meanings", []))
+        })
+    
+    if metrics_data:
+        metrics_df = pd.DataFrame(metrics_data)
+        st.dataframe(metrics_df, use_container_width=True)
+    
+    # Display each ambiguous word with its meanings
+    for word_idx, word_data in enumerate(ambiguous_words):
+        word = word_data.get("word", "")
+        pos = word_data.get("pos", "")
+        position = word_data.get("position", 0)
+        ambiguity_score = word_data.get("ambiguity_score", 0)
+        
+        # Create expander for each word
+        with st.expander(f"{word} ({format_pos(pos)}) - Scor Ambiguitate: {ambiguity_score:.2f}"):
+            st.markdown(f"**Poziția în text:** {position + 1}")
             
-            # Show selected sense
-            selected_sense = word_info.get("selected_sense", {})
-            if selected_sense:
-                st.markdown("**Sens selectat:**")
-                st.json(selected_sense)
+            # Display top meanings
+            top_meanings = word_data.get("top_meanings", [])
+            if top_meanings:
+                st.markdown("### Sensuri Principale")
+                
+                # Create tabs for each top meaning
+                if len(top_meanings) > 0:
+                    tabs = st.tabs([f"Sens {i+1} ({m.get('confidence', 0):.2f})" for i, m in enumerate(top_meanings)])
+                    
+                    for i, (tab, meaning) in enumerate(zip(tabs, top_meanings)):
+                        with tab:
+                            display_meaning(meaning, is_primary=(i==0))
             
-            # Show alternative senses
-            senses = word_info.get("senses", [])
-            if len(senses) > 1:
-                st.markdown("**Sensuri alternative:**")
-                for sense in senses[1:]:  # Skip the first one (selected)
-                    st.json(sense)
+            # Display other meanings using a checkbox
+            other_meanings = word_data.get("other_meanings", [])
+            if other_meanings:
+                # Checkbox to toggle visibility - less disruptive than a button
+                show_other = st.checkbox(f"Arată alte sensuri posibile ({len(other_meanings)})", key=f"show_other_{word_idx}")
+                
+                # Only show other meanings if checkbox is checked
+                if show_other:
+                    st.markdown("### Alte Sensuri Posibile")
+                    for i, meaning in enumerate(other_meanings):
+                        st.markdown(f"#### Sens alternativ {i+1} - Încredere: {meaning.get('confidence', 0):.2f}")
+                        display_meaning(meaning, is_primary=False)
+                        # Add a separator between meanings except for the last one
+                        if i < len(other_meanings) - 1:
+                            st.markdown("---")
+
+
+def display_meaning(meaning: Dict[str, Any], is_primary: bool = False):
+    """
+    Display a single word meaning with its enrichment
+    
+    Args:
+        meaning: The meaning dictionary
+        is_primary: Whether this is the primary meaning
+    """
+    definition = meaning.get("definition", "")
+    synonyms = meaning.get("synonyms", [])
+    enrichment = meaning.get("enrichment", {})    
+    
+    if is_primary:
+        st.markdown("#### Sensul cel mai probabil în acest context")
+        
+    st.markdown(f"**Definiție:** {definition}")
+        
+    if synonyms:
+        st.markdown(f"**Sinonime:** {', '.join(synonyms)}")
+    
+    
+    # Display enrichment
+    if enrichment:
+        st.markdown("#### Îmbogățire")
+        
+        # Display explanation
+        explanation = enrichment.get("explanation", "")
+        if explanation:
+            st.markdown(f"**Explicație:**\n{explanation}")
+        
+        # Display examples
+        examples = enrichment.get("examples", [])
+        if examples:
+            st.markdown("**Exemple:**")
+            for i, example in enumerate(examples):
+                st.markdown(f"{i+1}. *{example}*")
+
+
+def format_pos(pos: str) -> str:
+    """Format part of speech tag to human-readable form"""
+    pos_map = {
+        "NOUN": "Substantiv",
+        "VERB": "Verb",
+        "ADJ": "Adjectiv",
+        "ADV": "Adverb",
+        "PRON": "Pronume",
+        "DET": "Determinant",
+        "ADP": "Prepoziție",
+        "CONJ": "Conjuncție",
+        "NUM": "Numeral",
+        "PART": "Particulă",
+        "INTJ": "Interjecție"
+    }
+    return pos_map.get(pos, pos)
 
 
 if __name__ == "__main__":

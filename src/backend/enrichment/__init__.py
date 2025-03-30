@@ -31,8 +31,10 @@ logger.info(f"Enrichment module initialized. Logs will be written to {log_file}"
 
 # Import and re-export the main enrichment function
 from .enrichment import enrich_top_meanings
+from .main import create_test_data
 
 __all__ = [
     'logger',
-    'enrich_top_meanings'
+    'enrich_top_meanings',
+    'create_test_data'
 ] 
