@@ -1,18 +1,18 @@
 """
-Enrichment package for the Word Sense Disambiguation API.
+Enrichment Module for Romanian Word Sense Disambiguation
 
-This package provides functionality to enrich disambiguation results
-with explanations and example sentences.
+This module provides functionality for enriching Romanian text with word sense information,
+specifically handling ambiguous words and providing possible meanings.
 """
 
 import logging
-import os
+from pathlib import Path
 
 from ..utils.config import settings
 
-# Set up logging
-log_dir = os.path.join(os.path.dirname(__file__), 'logs')
-os.makedirs(log_dir, exist_ok=True)
+# Create logging directory if it doesn't exist
+log_dir = Path(__file__).parent / 'logs'
+log_dir.mkdir(exist_ok=True, parents=True)
 
 logger = logging.getLogger('backend.enrichment')
 logger.setLevel(getattr(logging, settings.LOG_LEVEL))
@@ -22,7 +22,7 @@ logger.propagate = True  # Allow propagation to root logger for console output
 if logger.handlers:
     logger.handlers.clear()
 
-log_file = os.path.join(log_dir, 'enrichment.log')
+log_file = log_dir / 'enrichment.log'
 file_handler = logging.FileHandler(log_file)
 file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(name)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)

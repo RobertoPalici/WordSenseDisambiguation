@@ -1,7 +1,6 @@
 import os
 import requests
-import json
-from typing import Dict, Any, List
+from typing import Dict, Any
 import streamlit as st
 import pandas as pd
 

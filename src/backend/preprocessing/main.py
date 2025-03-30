@@ -1,6 +1,7 @@
 import time
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 
 from fastapi import HTTPException
@@ -85,13 +86,13 @@ def analyze_text(text: str, base_url: Optional[str] = None) -> ProcessedTextDict
         raise RuntimeError(error_msg)
 
 if __name__ == "__main__":
-    log_dir = os.path.join(os.path.dirname(__file__), 'logs')
-    os.makedirs(log_dir, exist_ok=True)
+    log_dir = Path(__file__).parent / 'logs'
+    log_dir.mkdir(exist_ok=True, parents=True)
     
     output_logger = logging.getLogger('backend.preprocessing.output')
     output_logger.setLevel(logging.INFO)
     
-    output_file = os.path.join(log_dir, 'output.log')
+    output_file = log_dir / 'output.log'
     file_handler = logging.FileHandler(output_file, mode='w')  # 'w' mode to overwrite each time
     file_handler.setFormatter(logging.Formatter('%(message)s'))  # Simple format with just the message
     output_logger.addHandler(file_handler)

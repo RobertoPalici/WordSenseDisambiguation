@@ -7,8 +7,8 @@ and writes formatted results to an output log file.
 """
 
 import json
-import os
 import logging
+from pathlib import Path
 from typing import Dict, Any, List, Union, Optional
 
 from ..utils.config import settings
@@ -25,8 +25,8 @@ from .types import (
 module_logger = logging.getLogger('backend.ambiguity.main')
 
 # Set up output logging
-log_dir = os.path.join(os.path.dirname(__file__), 'logs')
-os.makedirs(log_dir, exist_ok=True)
+log_dir = Path(__file__).parent / 'logs'
+log_dir.mkdir(exist_ok=True, parents=True)
 
 # Create a logger specifically for the output
 output_logger = logging.getLogger('backend.ambiguity.output')
@@ -37,7 +37,7 @@ if output_logger.handlers:
     output_logger.handlers.clear()
 
 # Create file handler for output.log
-output_file = os.path.join(log_dir, 'output.log')
+output_file = log_dir / 'output.log'
 file_handler = logging.FileHandler(output_file, mode='w')  # 'w' mode to overwrite each time
 file_handler.setFormatter(logging.Formatter('%(message)s'))  # Simple format with just the message
 output_logger.addHandler(file_handler)

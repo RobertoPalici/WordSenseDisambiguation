@@ -8,6 +8,8 @@ explanations and example sentences using OpenAI.
 import json
 import logging
 import time
+import os
+from pathlib import Path
 
 from .format_results import convert_to_frontend_format
 from .openai_client import generate_batch_explanations, generate_batch_examples
@@ -132,7 +134,23 @@ def enrich_top_meanings(result_dict: ResultDict, batch_size: int = 3) -> Fronten
     
     front_end_result = convert_to_frontend_format(result_dict)
 
-    json.dump(front_end_result, open("src/backend/enrichment/logs/output.json", "w"), indent=2, ensure_ascii=False)
-    logger.info(f"Frontend result saved to src/backend/enrichment/logs/output.json")
+    # Save output to a JSON file using platform-independent path handling
+    try:
+        # Create a Path object for the logs directory
+        logs_dir = Path(__file__).parent / "logs"
+        
+        # Ensure the logs directory exists
+        logs_dir.mkdir(exist_ok=True, parents=True)
+        
+        # Create the output file path
+        output_file = logs_dir / "output.json"
+        
+        # Write the JSON file
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(front_end_result, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Frontend result saved to {output_file}")
+    except Exception as e:
+        logger.error(f"Failed to save output JSON: {str(e)}")
 
     return front_end_result
