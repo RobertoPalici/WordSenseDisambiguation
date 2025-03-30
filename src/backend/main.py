@@ -161,7 +161,9 @@ async def disambiguate_text(request: TextRequest):
 
         # Step 3: Enrich results with AI-generated explanations and examples
         frontend_result = enrich_top_meanings(result)
+
         total_execution_time = time.time() - start_time
+        frontend_result["total_execution_time"] = total_execution_time    
         logger.info(f"Total execution time: {total_execution_time:.4f} seconds")
 
         return frontend_result

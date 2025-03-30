@@ -93,7 +93,7 @@ def process_text(
     }
     
     # Log the formatted output
-    log_formatted_output(result)
+    # log_formatted_output(result)
     
     module_logger.info(f"Processing completed. Found {len(ambiguous_words)} ambiguous words.")
     return result
