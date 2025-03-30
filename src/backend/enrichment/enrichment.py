@@ -61,10 +61,10 @@ def enrich_top_meanings(result_dict: ResultDict, batch_size: int = 3) -> Fronten
             key=lambda x: x.get("confidence", 0.0), 
             reverse=True
         )
-        
+        word_data["potential_meanings"] = sorted_meanings[:9]    
         
         # Add each meaning to the collection with metadata to track it
-        for meaning in sorted_meanings:
+        for meaning in sorted_meanings[:9]:
             all_meanings_to_enrich.append({
                 "word_idx": word_idx,
                 "word": word,
@@ -73,7 +73,6 @@ def enrich_top_meanings(result_dict: ResultDict, batch_size: int = 3) -> Fronten
                 "pos": meaning.get("pos", ""),
                 "confidence": meaning.get("confidence", 0.0)
             })
-    
     # Process meanings in batches
     for i in range(0, len(all_meanings_to_enrich), batch_size):
         batch = all_meanings_to_enrich[i:i+batch_size]
