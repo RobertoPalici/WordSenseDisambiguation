@@ -71,7 +71,6 @@ def analyze_text(text: str, base_url: Optional[str] = None) -> ProcessedTextDict
         return {
             "original_text": text,
             "processed_text": annotated_text.strip(),
-            "processing_time": processing_time,
             "analysis": {
                 "tokens": tokens,
                 "pos_tags": pos_tags,

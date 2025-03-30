@@ -4,7 +4,7 @@ Type definitions for the ambiguity detection and disambiguation system.
 This module provides centralized type definitions used throughout the system.
 """
 
-from typing import List, Tuple, Optional, TypedDict
+from typing import List, Optional, TypedDict
 
 # Synset information types
 class SynsetDict(TypedDict):
@@ -45,15 +45,8 @@ class RecommendationDict(TypedDict):
     recommendation: str
     options: List[RecommendationOptionDict]
 
-# Analysis types
-class AnalysisDict(TypedDict):
-    """Dictionary representation of text analysis results"""
-    tokens: List[str]
-    pos_tags: List[Tuple[str, str]]
-
 class ResultDict(TypedDict):
     """Dictionary representation of the complete ambiguity analysis result"""
     text: str
-    analysis: AnalysisDict
     ambiguous_words: List[AmbiguousWordDict]
     recommendations: List[RecommendationDict] 

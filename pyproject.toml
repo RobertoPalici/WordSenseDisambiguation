@@ -21,6 +21,7 @@ python-dotenv = ">=1.0.0"
 rowordnet = "^0.9.2"  
 transformers = "^4.40.0" 
 torch = "^2.2.0"
+openai = "^1.16.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -33,7 +34,7 @@ flake8 = ">=6.0.0"
 # Main scripts
 backend = "run_backend:main"
 frontend = "run_frontend:main"
-teprolin-check = "src.backend.preprocessing.teprolin_processor:check_teprolin_service"
+teprolin-check = "src.backend.preprocessing.service:checkService"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

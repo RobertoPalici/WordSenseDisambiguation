@@ -31,6 +31,12 @@ class Settings(BaseModel):
 
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
     API_PORT: int = int(os.getenv("API_PORT", "8000"))
+    
+    # OpenAI API settings
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+    ENRICHMENT_MOCK_API: bool = os.getenv("ENRICHMENT_MOCK_API", "false").lower() in ("true", "1", "t")
+    MOCK_API: bool = os.getenv("MOCK_API", "false").lower() in ("true", "1", "t")
 
 # Create a settings instance
 settings = Settings()

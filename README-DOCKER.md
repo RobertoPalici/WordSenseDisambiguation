@@ -26,7 +26,38 @@ cd WordSenseDisambiguation
 
 ### 2. Configuration
 
-The default configuration is in the `.env` file. You can modify this file to change the settings.
+Before building the Docker images, you need to configure your environment variables.
+
+1. Create a `.env` file with the required variables:
+
+```
+# API and server settings
+API_HOST=0.0.0.0
+API_PORT=8000
+FRONTEND_HOST=0.0.0.0
+FRONTEND_PORT=8501
+BACKEND_HOST=0.0.0.0
+BACKEND_PORT=8000
+BACKEND_RELOAD=False
+
+# Teprolin service (use teprolin as the hostname in Docker)
+TEPROLIN_URL=http://teprolin:5000
+
+# Application settings
+DEBUG=False
+LOG_LEVEL=INFO
+ENVIRONMENT=production
+
+# OpenAI API settings (required for enrichment)
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-3.5-turbo
+
+# Testing/Mock settings
+ENRICHMENT_MOCK_API=false
+MOCK_API=false
+```
+
+Make sure to replace `your_openai_api_key` with your actual OpenAI API key.
 
 ### 3. Build and Start the Services
 
@@ -39,6 +70,12 @@ This command will:
 - Pull the Teprolin image from Docker Hub
 - Start all three services
 - Create a network for the services to communicate
+
+To run the services in the background:
+
+```bash
+docker-compose up --build -d
+```
 
 ### 4. Accessing the Application
 
@@ -91,7 +128,25 @@ All services are connected through the `wsd-network` bridge network. The service
 
 ## Data Persistence
 
-The Teprolin service uses a volume (`teprolin-data`) to persist data across container restarts.
+The Teprolin service uses a volume (`teprolin-data`) to persist data across container restarts. This ensures that lexical data and models are preserved.
+
+## Environment Variables in Docker
+
+Docker-specific environment variables are set in the `docker-compose.yml` file. These override any conflicting values in your `.env` file when running in Docker:
+
+```yaml
+# Backend service environment variables
+environment:
+  - TEPROLIN_URL=http://teprolin:5000
+  - API_HOST=0.0.0.0
+  - API_PORT=8000
+  - ENVIRONMENT=production
+  - DEBUG=False
+
+# Frontend service environment variables
+environment:
+  - API_URL=http://backend:8000
+```
 
 ## Troubleshooting
 
@@ -117,12 +172,50 @@ docker-compose logs teprolin
 docker-compose restart teprolin
 ```
 
+### Network Issues
+
+If the services can't communicate with each other, check the Docker network:
+
+```bash
+docker network inspect wsd-network
+```
+
+### Volume Issues
+
+If the Teprolin service is having data persistence issues:
+
+```bash
+# Check volumes
+docker volume ls
+
+# Inspect the teprolin-data volume
+docker volume inspect teprolin-data
+```
+
+## Running Without Docker
+
+If you prefer to run the application without Docker, refer to the main [README.md](README.md) for instructions on:
+
+- Setting up Poetry environment
+- Running the backend and frontend
+- Running individual modules
+- Troubleshooting common issues
+
 ## Production Deployment
 
-For production deployment, update the environment variables in the `docker-compose.yml` file:
+For production deployment, make sure to set appropriate environment variables in your `.env` file or in the `docker-compose.yml` file:
 
 ```yaml
 environment:
   - ENVIRONMENT=production
   - DEBUG=False
-``` 
+  - LOG_LEVEL=WARNING
+```
+
+For a more secure deployment:
+
+1. Configure proper SSL termination
+2. Set up a reverse proxy (like Nginx)
+3. Implement proper authentication
+4. Restrict network access to services
+5. Use Docker secrets for sensitive information like API keys 

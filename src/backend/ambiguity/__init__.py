@@ -14,7 +14,6 @@ from .types import (
     RecommendationOptionDict, 
     RecommendationDict, 
     SynsetDict,
-    AnalysisDict,
     ResultDict
 )
 
@@ -27,6 +26,5 @@ __all__ = [
     "RecommendationOptionDict", 
     "RecommendationDict", 
     "SynsetDict",
-    "AnalysisDict",
     "ResultDict"
 ] 

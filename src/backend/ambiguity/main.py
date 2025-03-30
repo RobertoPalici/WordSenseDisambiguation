@@ -73,33 +73,21 @@ def process_text(
         processed_result = analyze_text(text)
         tokens = processed_result["analysis"]["tokens"]
         pos_tags = processed_result["analysis"]["pos_tags"]
-        dependencies = processed_result["analysis"]["dependencies"]
-        processed_text = processed_result["processed_text"]
     else:
         module_logger.debug("Using provided preprocessed data")
         tokens = preprocessed_data["tokens"]
         pos_tags = preprocessed_data["pos_tags"]
-        dependencies = preprocessed_data.get("dependencies", [])
-        processed_text = preprocessed_data.get("processed_text", "")
     
-    # Step 2: Detect ambiguities
     module_logger.debug("Detecting ambiguities")
     ambiguous_words: List[AmbiguousWordDict] = detector.detect_ambiguities(tokens, pos_tags)
     
-    # Step 3: Generate recommendations
     module_logger.debug("Generating recommendations")
     recommendations: List[RecommendationDict] = []
     if ambiguous_words:
         recommendations = recommender.get_recommendations(ambiguous_words)
     
-    # Prepare result
     result: ResultDict = {
         "text": text,
-        "analysis": {
-            "tokens": tokens,
-            "pos_tags": pos_tags,
-            "processed_text": processed_text
-        },
         "ambiguous_words": ambiguous_words,
         "recommendations": recommendations
     }

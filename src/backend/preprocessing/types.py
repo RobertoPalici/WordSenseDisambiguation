@@ -6,14 +6,12 @@ This module defines the types used for the Teprolin preprocessing functions.
 
 from typing import List, Optional, TypedDict, Tuple
 
-# Basic types
 TokenList = List[str]
 POSTagList = List[Tuple[str, str]]
 DependencyList = List[Tuple[str, str, str]]
 NERList = List[Tuple[str, str]]
 
 
-# Result types
 class AnalysisResultDict(TypedDict):
     """Dictionary representing the results of linguistic analysis"""
     tokens: TokenList
@@ -25,7 +23,6 @@ class ProcessedTextDict(TypedDict):
     """Dictionary representing processed text with linguistic annotations"""
     original_text: str
     processed_text: str
-    processing_time: float
     analysis: AnalysisResultDict
 
 class TeprolinStatusDict(TypedDict):

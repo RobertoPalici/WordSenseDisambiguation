@@ -5,11 +5,8 @@ This module provides functionality to generate recommendations for disambiguatin
 ambiguous words found in Romanian text.
 """
 
-from typing import List, Optional
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+from typing import List
 from . import logger
-from ..transformers.model_manager import model_manager
 from ..types import (
     MeaningDict, 
     AmbiguousWordDict, 
@@ -79,51 +76,3 @@ class DisambiguationRecommender:
         
         logger.info(f"Generated {len(recommendations)} recommendations")
         return recommendations
-    
-    def select_best_meaning(self, 
-                           ambiguous_word: AmbiguousWordDict, 
-                           context: str, 
-                           model_name: str = "dumitrescustefan/bert-base-romanian-uncased-v1") -> Optional[MeaningDict]:
-        """
-        Select the best meaning for an ambiguous word based on context
-        
-        Args:
-            ambiguous_word: Dictionary containing ambiguous word information
-            context: The surrounding text providing context
-            model_name: Name of the transformer model to use
-            
-        Returns:
-            Dictionary with the best meaning
-        """
-        # Get context embedding
-        context_embedding: np.ndarray = model_manager.get_embedding(context, model_name).numpy()
-        
-        # Calculate similarity between context and each definition
-        meanings: List[MeaningDict] = ambiguous_word["potential_meanings"]
-        max_similarity: float = -1.0
-        best_meaning: Optional[MeaningDict] = None
-        
-        for meaning in meanings:
-            definition: str = meaning["definition"] or " ".join(meaning["synonyms"])
-            
-            if not definition:
-                continue
-            
-            # Get definition embedding
-            definition_embedding: np.ndarray = model_manager.get_embedding(definition, model_name).numpy()
-            
-            # Calculate cosine similarity
-            similarity: float = float(cosine_similarity(
-                [context_embedding], 
-                [definition_embedding]
-            )[0][0])
-            
-            logger.debug(f"Similarity for meaning '{definition[:30]}...': {similarity:.4f}")
-            
-            if similarity > max_similarity:
-                max_similarity = similarity
-                best_meaning = meaning
-        
-        logger.info(f"Selected best meaning for {ambiguous_word['word']} with similarity {max_similarity:.4f}")
-        
-        return best_meaning or (meanings[0] if meanings else None) 

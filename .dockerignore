@@ -12,7 +12,7 @@ docker-compose.yml
 venv/
 .venv/
 .env.local
-
+scripts/
 # Python cache
 __pycache__/
 *.py[cod]

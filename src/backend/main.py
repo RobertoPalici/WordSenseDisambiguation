@@ -4,14 +4,20 @@ FastAPI backend for Word Sense Disambiguation
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from .preprocessing.service import checkService
+from .preprocessing import analyze_text
+
+from .ambiguity import process_text
+
+from .enrichment import enrich_top_meanings, create_test_data
+from .enrichment.types import FrontendResultDict
+
 from .utils.config import settings
-from .preprocessing import analyze_text, checkService
-from .ambiguity import process_text, AmbiguousWordDict, RecommendationDict
 
 # Configure root logger
 logging.basicConfig(
@@ -63,6 +69,7 @@ async def health_check():
     # Determine overall health status
     is_healthy = teprolin_status["teprolin_status"] == "available"
     
+    
     response = {
         "status": "healthy" if is_healthy else "degraded",
         "api": {
@@ -78,41 +85,6 @@ async def health_check():
     logger.debug(f"Health check result: {response['status']}")
     return response
 
-
-class MeaningOption(BaseModel):
-    """Model for a potential meaning of an ambiguous word"""
-    id: str = Field(..., description="Synset ID")
-    definition: str = Field(..., description="Definition of the meaning")
-    pos: str = Field(..., description="Part of speech")
-    synonyms: List[str] = Field(..., description="List of synonyms")
-    confidence: float = Field(..., description="Confidence score")
-
-class AmbiguousWord(BaseModel):
-    """Model for an ambiguous word"""
-    word: str = Field(..., description="The ambiguous word")
-    pos: str = Field(..., description="Part of speech")
-    position: int = Field(..., description="Position in text")
-    potential_meanings: List[MeaningOption] = Field(..., description="Potential meanings")
-
-class RecommendationOption(BaseModel):
-    """Model for a recommendation option"""
-    meaning: str = Field(..., description="Definition of the meaning")
-    synonymous: List[str] = Field(..., description="Confidence score")
-
-class Recommendation(BaseModel):
-    """Model for a disambiguation recommendation"""
-    word: str = Field(..., description="The ambiguous word")
-    position: int = Field(..., description="Position in text")
-    options: List[RecommendationOption] = Field(..., description="Recommendation options")
-
-class WSDResponse(BaseModel):
-    """Response model for text processing"""
-    original_text: str = Field(..., description="The original text")
-    processed_text: str = Field(..., description="The processed text with POS tags")
-    ambiguous_words: List[Any] = Field(..., description="List of ambiguous words detected")
-    recommendations: List[Any] = Field(..., description="Disambiguation recommendations")
-    processing_time: float = Field(..., description="Time taken to process the text in seconds")
-
 class TextRequest(BaseModel):
     """Request model for text processing"""
     text: str = Field(..., description="The text to be processed")
@@ -121,7 +93,7 @@ class TextRequest(BaseModel):
         description="Threshold for determining ambiguity (0.0-1.0)"
     )
 
-@app.post("/api/disambiguate", response_model=WSDResponse)
+@app.post("/api/disambiguate", response_model=FrontendResultDict)
 async def disambiguate_text(request: TextRequest):
     """
     Disambiguate the senses of words in the provided text
@@ -130,17 +102,46 @@ async def disambiguate_text(request: TextRequest):
     1. Analyze it linguistically (tokenization, POS tagging, etc.)
     2. Detect ambiguous words based on semantic similarity
     3. Generate recommendations for disambiguation
+    4. Enrich results with AI-generated explanations and examples
     
-    Returns a structured response with:
-    - The original and processed text
-    - A list of detected ambiguous words with their potential meanings
-    - Recommendations for disambiguation
+    Parameters:
+        request: The text to process and configuration options
+        
+    Options:
+        - text: The Romanian text to process
+        - similarity_threshold: Threshold for determining ambiguity (0.0-1.0)
+    
+    Returns:
+        A FrontendResultDict containing:
+        - text: The original text
+        - ambiguous_words: List of ambiguous words with:
+          - word: The ambiguous word
+          - pos: Part of speech
+          - position: Position in text
+          - ambiguity_score: How ambiguous the word is (0.0-1.0)
+          - top_meanings: List of top meanings with enriched explanations and examples
+          - other_meanings: Additional meanings without enrichment
+        - enrichment_time: Time taken for enrichment in seconds
+        - total_execution_time: Total time taken for the entire process
     """
+    start_time = time.time()
     logger.info(f"Processing disambiguation request for text of length {len(request.text)}")
     
     try:
-        start_time = time.time()
-        
+        if settings.MOCK_API:
+            test_data = create_test_data()
+            logger.debug(f"Created test data with {len(test_data.get('ambiguous_words', []))} ambiguous words")
+            
+            frontend_result = enrich_top_meanings(test_data)
+            
+            # Calculate total execution time
+            total_execution_time = time.time() - start_time
+            frontend_result["total_execution_time"] = total_execution_time
+            logger.info(f"Total execution time: {total_execution_time:.4f} seconds")
+
+            return frontend_result
+
+
         # Step 1: Process text with preprocessing module
         logger.debug("Calling preprocessing module")
         preprocessing_result = analyze_text(request.text)
@@ -157,18 +158,14 @@ async def disambiguate_text(request: TextRequest):
             },
             similarity_threshold=request.similarity_threshold
         )
-        
-        processing_time = time.time() - start_time
-        logger.info(f"Text processed successfully in {processing_time:.2f} seconds")
-        
-        # Return the processed result
-        return WSDResponse(
-            original_text=result["text"],
-            processed_text=preprocessing_result["processed_text"],
-            ambiguous_words=result["ambiguous_words"],
-            recommendations=result["recommendations"],
-            processing_time=processing_time
-        )
+
+        # Step 3: Enrich results with AI-generated explanations and examples
+        frontend_result = enrich_top_meanings(result)
+        total_execution_time = time.time() - start_time
+        logger.info(f"Total execution time: {total_execution_time:.4f} seconds")
+
+        return frontend_result
+
     except HTTPException:
         # Re-raise HTTP exceptions
         logger.error("HTTP exception occurred during text processing")
@@ -177,7 +174,7 @@ async def disambiguate_text(request: TextRequest):
         # Log the error and return a 500 for any other exceptions
         error_msg = f"Error processing text: {str(e)}"
         logger.error(error_msg)
-        raise HTTPException(status_code=500, detail=error_msg) 
+        raise HTTPException(status_code=500, detail=error_msg)
 
 if __name__ == "__main__":
     import uvicorn

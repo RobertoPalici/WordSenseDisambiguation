@@ -1,7 +1,5 @@
 # Word Sense Disambiguation with Teprolin
 
-PROBLEMS: Teprolin Ner not working don't know why ?
-
 This project uses Teprolin, a text processing platform for Romanian language, to detect and disambiguate ambiguous words in a given text. The system analyzes input text, identifies potentially ambiguous words, and provides explanations about different possible meanings based on context.
 
 ## Project Structure
@@ -22,6 +20,10 @@ The project is divided into backend and frontend components:
 3. **Sense Disambiguation**
    - Selects the most probable sense of a word based on context
    - Uses word vectorization and cosine similarity
+   
+4. **Enrichment**
+   - Uses OpenAI API to generate explanations and examples for word senses
+   - Formats results for frontend presentation
 
 ### Frontend
 
@@ -32,66 +34,168 @@ The project is divided into backend and frontend components:
 
 ## Setup and Installation
 
-### Using Poetry
+### Prerequisites
+
+- Python 3.9+ (recommended 3.9.8)
+- [Poetry](https://python-poetry.org/) for dependency management
+- Docker (optional, for running Teprolin service)
+
+### Installing Poetry
 
 1. Install Poetry if you don't have it:
-   ```
+   ```bash
    curl -sSL https://install.python-poetry.org | python3 -
    ```
 
-2. Install dependencies:
+2. Verify installation:
+   ```bash
+   poetry --version
    ```
+
+### Setting Up the Environment
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd WordSenseDisambiguation
+   ```
+
+2. Install dependencies using Poetry:
+   ```bash
    poetry install
    ```
 
-3. Check if Teprolin service is running:
+3. Activate the virtual environment:
+   ```bash
+   # Use this for Poetry environments
+   poetry env activate
+   
+   # If the above doesn't work, try using:
+   source $(poetry env info --path)/bin/activate
    ```
+
+4. Check if Teprolin service is running:
+   ```bash
    poetry run teprolin-check
    ```
    
-   If not running, start it:
+   If not running, start it using Docker:
+   ```bash
+   docker run -p 5000:5000 raduion/teprolin:1.1
    ```
-   docker run -p 5000:5000 racai/teprolin
-   ```
+
+### Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```
+# API and server settings
+API_HOST=0.0.0.0
+API_PORT=8000
+FRONTEND_HOST=0.0.0.0
+FRONTEND_PORT=8501
+BACKEND_HOST=0.0.0.0
+BACKEND_PORT=8000
+BACKEND_RELOAD=False
+
+# Teprolin service
+TEPROLIN_URL=http://localhost:5000
+
+# Application settings
+DEBUG=False
+LOG_LEVEL=INFO
+ENVIRONMENT=development
+
+# OpenAI API settings (required for enrichment module)
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-3.5-turbo
+
+# Testing/Mock settings
+ENRICHMENT_MOCK_API=false
+MOCK_API=false
+```
 
 ## Running the Application
 
 ### Using Poetry (Recommended)
 
+For the main applications, use the Poetry scripts:
+
 Run the backend:
-```
+```bash
 poetry run backend
 ```
 
 Run the frontend:
-```
+```bash
 poetry run frontend
 ```
 
-### Alternative Methods
+### Running Individual Modules
 
-Backend:
-```
-python run_backend.py
-```
-or
-```
-poetry run uvicorn src.backend.main:app --reload
+First activate the Poetry environment:
+```bash
+poetry env activate
+# OR if that doesn't work, try using:
+source $(poetry env info --path)/bin/activate
 ```
 
-Frontend:
+#### Run Modules as Python Modules:
+
+Run the preprocessing module:
+```bash
+python -m src.backend.preprocessing.main
 ```
-python run_frontend.py
+
+Run the ambiguity module:
+```bash
+python -m src.backend.ambiguity.main
 ```
-or
+
+Run the enrichment module:
+```bash
+python -m src.backend.enrichment.main
 ```
-poetry run streamlit run src/frontend/app/app.py
-```
+
 
 ### Using Docker Compose
 
+See the [README-DOCKER.md](README-DOCKER.md) file for Docker-specific instructions.
+
+## Utility Scripts
+
+### Cleaning Logs
+
+The project includes a script to clean logs and temporary files:
+
+```bash
+# Make the script executable
+chmod +x scripts/clean_logs.sh
+
+# Run the script
+./scripts/clean_logs.sh
 ```
-docker-compose up
+
+This script will:
+- Remove all `.log` files from module-specific log directories
+- Clean log files at the project root
+- Remove generated JSON files
+- Clean temporary files
+- Remove Python cache files
+
+## Development
+
+Add new dependencies:
+```bash
+poetry add package-name
+```
+
+Activate the virtual environment:
+```bash
+poetry env activate
+
+# If the above doesn't work, try using:
+source $(poetry env info --path)/bin/activate
 ```
 
 ## Troubleshooting
@@ -101,77 +205,27 @@ docker-compose up
 If the backend doesn't start, check the following:
 
 - Make sure Teprolin Docker service is running:
-  ```
+  ```bash
   poetry run teprolin-check
   ```
 
 - Check if Python path is correct:
-  ```
+  ```bash
   echo $PYTHONPATH
   ```
   
   If needed, set it to include the project root:
-  ```
+  ```bash
   export PYTHONPATH=$PYTHONPATH:$(pwd)
   ```
 
-- Check for errors in the log file:
-  ```
-  cat backend.log
-  ```
 
-### 2. Import Errors
+## Technical Details
 
-If you see import errors, it's likely a Python path issue. Use the helper scripts:
-```
-python run_backend.py
-```
-
-Or set PYTHONPATH manually:
-```
-PYTHONPATH=$(pwd) poetry run uvicorn src.backend.main:app --reload
-```
-
-### 3. Poetry Issues
-
-If Poetry is causing problems:
-
-- Update Poetry:
-  ```
-  poetry self update
-  ```
-
-- Clear Poetry cache:
-  ```
-  poetry cache clear pypi --all
-  ```
-
-- Recreate the virtual environment:
-  ```
-  poetry env remove --all
-  poetry install
-  ```
-
-## Development
-
-Add new dependencies:
-```
-poetry add package-name
-```
-
-Run tests:
-```
-poetry run pytest
-```
-
-Activate the virtual environment:
-```
-poetry shell
-```
-
-## Technical Challenges
-
-- Integration of NLP-specific tools: word vectorization, cosine similarity, named entity recognition
-- Using technologies like BERT, Teprolin, FastAPI, and Streamlit
-- Ensuring high-quality responses from the application
-- Managing communication with the Teprolin Docker service 
+The project uses the following technologies:
+- FastAPI for the backend API
+- Streamlit for the frontend
+- Teprolin for Romanian language processing
+- OpenAI API for generating explanations and examples
+- Poetry for dependency management
+- Docker for containerization 
