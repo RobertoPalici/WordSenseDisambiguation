@@ -7,7 +7,7 @@ explanations and example sentences.
 
 import logging
 import re
-from typing import Dict, List
+from typing_extensions import Dict, List
 
 from openai import OpenAI
 from ..utils.config import settings

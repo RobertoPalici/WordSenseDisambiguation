@@ -6,7 +6,7 @@ into optimized structures for frontend consumption.
 """
 
 import logging
-from typing import List
+from typing_extensions import List
 
 from ..ambiguity.types import ResultDict
 from .types import (

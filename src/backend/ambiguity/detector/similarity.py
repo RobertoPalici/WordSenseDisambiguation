@@ -7,12 +7,17 @@ texts using BERT embeddings.
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import List, Tuple, Dict, Any, Optional, Union, cast, TypeVar
+from typing_extensions import List, Tuple, Dict, Any, Optional, Union, cast, TypeVar
 from . import logger
 from ..transformers.model_manager import model_manager
 
+import re
+
 # Type variable for generic numpy arrays
 NDArray = TypeVar('NDArray', bound=np.ndarray)
+
+def split_into_sentences(text: str) -> List[str]:
+    return re.split(r"(?<=[.!?])\s+", text)
 
 def calculate_context_embedding(
     tokens: List[str], 
@@ -31,13 +36,14 @@ def calculate_context_embedding(
         Context embedding for the token
     """
     # Use a window of text around the token for context
-    window_size: int = 3
+    window_size: int = 5
     start_idx: int = max(0, token_index - window_size)
     end_idx: int = min(len(tokens), token_index + window_size + 1)
     context: str = " ".join(tokens[start_idx:end_idx])
     
     # Get embedding for the context
     embedding: np.ndarray = model_manager.get_embedding(context, model_name).numpy()
+    embedding = embedding / np.linalg.norm(embedding)  # Normalize the embedding
     return embedding
 
 def calculate_definition_embeddings(

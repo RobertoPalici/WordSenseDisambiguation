@@ -7,7 +7,7 @@ calls the enrichment function, and prints the results.
 
 import json
 import logging
-from typing import List
+from typing_extensions import List
 
 from ..utils.config import settings
 from ..ambiguity.types import (

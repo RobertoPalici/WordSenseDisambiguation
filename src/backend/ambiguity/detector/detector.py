@@ -6,7 +6,7 @@ based on their semantic similarity.
 """
 
 import numpy as np
-from typing import Dict, Any, List, Tuple, Optional, Union, Set, cast
+from typing_extensions import Dict, Any, List, Tuple, Optional, Union, Set, cast
 from . import logger
 from .synset_utils import get_synset_info, get_synsets_for_word
 from .similarity import (
@@ -16,6 +16,7 @@ from .similarity import (
     calculate_similarity_statistics
 )
 from ..types import SynsetDict, MeaningDict, AmbiguousWordDict
+from ..ner_utils import get_named_entities, is_named_entity
 
 class AmbiguityDetector:
     """
@@ -133,12 +134,18 @@ class AmbiguityDetector:
         
         # Map each token to its POS tag
         token_pos_map: Dict[str, str] = self._create_token_pos_map(pos_tags)
+        #adaugat
+        text: str = " ".join(tokens) 
+        ner_entities = get_named_entities(text)
         
         # Store ambiguous words
         ambiguous_words: List[AmbiguousWordDict] = []
         
         # Process each token
         for token_index, token in enumerate(tokens):
+            if is_named_entity(token, ner_entities):
+                logger.debug(f"Skipping named entity: {token}")
+                continue
             # Get POS tag for token
             pos: str = self._get_pos_tag(token, token_pos_map)
             

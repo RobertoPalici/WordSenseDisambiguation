@@ -4,7 +4,7 @@ Type definitions for the enrichment module.
 This module provides data types used for enriching disambiguation results.
 """
 
-from typing import List, TypedDict
+from typing_extensions import List, TypedDict
 
 class EnrichmentDict(TypedDict, total=False):
     """Dictionary representing enrichment data for a word meaning"""

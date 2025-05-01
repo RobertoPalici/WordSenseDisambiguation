@@ -5,7 +5,7 @@ This module provides functionality to generate recommendations for disambiguatin
 ambiguous words found in Romanian text.
 """
 
-from typing import List
+from typing_extensions import List
 from . import logger
 from ..types import (
     MeaningDict, 

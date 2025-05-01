@@ -4,7 +4,7 @@ Type definitions for preprocessing module
 This module defines the types used for the Teprolin preprocessing functions.
 """
 
-from typing import List, Optional, TypedDict, Tuple
+from typing_extensions import List, Optional, TypedDict, Tuple
 
 TokenList = List[str]
 POSTagList = List[Tuple[str, str]]

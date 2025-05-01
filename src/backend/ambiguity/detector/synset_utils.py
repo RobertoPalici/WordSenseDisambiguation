@@ -6,7 +6,7 @@ from RoWordNet.
 """
 
 import rowordnet as rwn
-from typing import Dict, Any, List
+from typing_extensions import Dict, Any, List
 from . import logger
 
 # Initialize RoWordNet

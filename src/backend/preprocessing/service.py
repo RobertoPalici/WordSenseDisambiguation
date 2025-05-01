@@ -7,7 +7,7 @@ of the Teprolin NLP service.
 
 import requests
 import logging
-from typing import Optional
+from typing_extensions import Optional
 
 from ..utils.config import settings
 from .types import TeprolinStatusDict

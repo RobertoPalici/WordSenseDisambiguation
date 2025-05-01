@@ -4,7 +4,7 @@ Type definitions for the ambiguity detection and disambiguation system.
 This module provides centralized type definitions used throughout the system.
 """
 
-from typing import List, Optional, TypedDict
+from typing_extensions import List, Optional, TypedDict
 
 # Synset information types
 class SynsetDict(TypedDict):

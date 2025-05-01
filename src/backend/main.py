@@ -4,7 +4,7 @@ FastAPI backend for Word Sense Disambiguation
 
 import logging
 import time
-from typing import Optional
+from typing_extensions import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field

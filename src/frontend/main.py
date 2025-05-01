@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import Dict, Any
+from typing_extensions import Dict, Any
 import streamlit as st
 import pandas as pd
 

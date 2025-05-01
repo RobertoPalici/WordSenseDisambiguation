@@ -2,14 +2,14 @@ import time
 import logging
 import os
 from pathlib import Path
-from typing import Optional
+from typing_extensions import Optional
 
 from fastapi import HTTPException
 
 from ..utils.config import settings
 from .types import ProcessedTextDict
 from .service import checkService
-from .processor_methods import tokenize, pos_tagging, named_entity_recognition, dependency_parsing
+from .processor_methods import tokenize, pos_tagging, dependency_parsing, named_entity_recognition
 
 logger = logging.getLogger('backend.preprocessing.main')
 

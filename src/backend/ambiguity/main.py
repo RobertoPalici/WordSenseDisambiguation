@@ -9,7 +9,7 @@ and writes formatted results to an output log file.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Union, Optional
+from typing_extensions import Dict, Any, List, Union, Optional
 
 from ..utils.config import settings
 from .detector import AmbiguityDetector
