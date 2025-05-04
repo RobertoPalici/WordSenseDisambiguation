@@ -38,6 +38,11 @@ class Settings(BaseModel):
     ENRICHMENT_MOCK_API: bool = os.getenv("ENRICHMENT_MOCK_API", "false").lower() in ("true", "1", "t")
     MOCK_API: bool = os.getenv("MOCK_API", "false").lower() in ("true", "1", "t")
 
+    #DeepSeek API settings
+    OPENROUTER_API_KEY: str=os.getenv("OPENROUTER_API_KEY", "")
+    ENRICHMENT_MODEL: str=os.getenv("ENRICHMENT_MODEL", "deepseek/deepseek-chat")
+
+
 # Create a settings instance
 settings = Settings()
 

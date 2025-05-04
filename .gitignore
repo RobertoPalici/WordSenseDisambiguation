@@ -72,4 +72,6 @@ docs/site/
 # Other
 .history/
 tmp/
-temp/ 
+temp/
+
+.env

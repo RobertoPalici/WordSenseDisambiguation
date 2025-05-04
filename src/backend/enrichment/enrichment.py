@@ -12,7 +12,8 @@ import os
 from pathlib import Path
 
 from .format_results import convert_to_frontend_format
-from .openai_client import generate_batch_explanations, generate_batch_examples
+# from .openai_client import generate_batch_explanations, generate_batch_examples
+from .deepseek_client import generate_batch_explanations, generate_batch_examples
 from ..ambiguity.types import (
     ResultDict,
 )
