@@ -107,8 +107,12 @@ LOG_LEVEL=INFO
 ENVIRONMENT=development
 
 # OpenAI API settings (required for enrichment module)
-OPENAI_API_KEY=your_openai_api_key
+OPENAI_API_KEY=your_openai_key
 OPENAI_MODEL=gpt-3.5-turbo
+
+# Deepseek settings
+OPENROUTER_API_KEY=your_openrouter_key
+ENRICHMENT_MODEL=deepseek/deepseek-chat
 
 # Testing/Mock settings
 ENRICHMENT_MOCK_API=false
