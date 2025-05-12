@@ -10,6 +10,7 @@ TokenList = List[str]
 POSTagList = List[Tuple[str, str]]
 DependencyList = List[Tuple[str, str, str]]
 NERList = List[Tuple[str, str]]
+LemmaList = List[str]
 
 
 class AnalysisResultDict(TypedDict):

@@ -154,6 +154,7 @@ async def disambiguate_text(request: TextRequest):
                 "tokens": preprocessing_result["analysis"]["tokens"],
                 "pos_tags": preprocessing_result["analysis"]["pos_tags"],
                 "dependencies": preprocessing_result["analysis"]["dependencies"],
+                "lemmas": preprocessing_result["analysis"]["lemmas"],
                 "processed_text": preprocessing_result["processed_text"]
             },
             similarity_threshold=request.similarity_threshold

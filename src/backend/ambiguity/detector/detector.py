@@ -119,7 +119,7 @@ class AmbiguityDetector:
             "ambiguity_score": float(ambiguity_score)
         }
     
-    def detect_ambiguities(self, tokens: List[str], pos_tags: List[Tuple[str, str]]) -> List[AmbiguousWordDict]:
+    def detect_ambiguities(self, tokens: List[str], pos_tags: List[Tuple[str, str]], lemmas: List[str]) -> List[AmbiguousWordDict]:
         """
         Detect ambiguous words in the given preprocessed text
         
@@ -135,6 +135,7 @@ class AmbiguityDetector:
         # Map each token to its POS tag
         token_pos_map: Dict[str, str] = self._create_token_pos_map(pos_tags)
         #adaugat
+        token_lemma_map: Dict[str, str] = self._create_token_lemma_map(tokens, lemmas)
         text: str = " ".join(tokens) 
         ner_entities = get_named_entities(text)
         
@@ -148,18 +149,23 @@ class AmbiguityDetector:
                 continue
             # Get POS tag for token
             pos: str = self._get_pos_tag(token, token_pos_map)
+
+            lemma: str = self._get_lemma(token, token_lemma_map)
             
             # Skip non-content words
             if not self._is_content_word(pos):
                 continue
                 
             # Get synsets for the token
-            synset_ids: List[str] = get_synsets_for_word(token.lower())
+            synset_ids: List[str] = get_synsets_for_word(lemma.lower())
+            for synset_id in synset_ids:
+                print(f"Synset ID: {get_synset_info(synset_id)}")
             
             logger.debug(f"Word: {token}, POS: {pos}, Found synsets: {len(synset_ids)}")
             
             # Skip words with only one or no synsets
             if len(synset_ids) <= 1:
+                print(f"Skipping word '{token}' with {len(synset_ids)} synsets")
                 continue
             
             # Get synset information
@@ -238,4 +244,30 @@ class AmbiguityDetector:
     def _is_content_word(self, pos: str) -> bool:
         """Check if a word is a content word based on its POS tag"""
         content_word_prefixes: Set[str] = {"NOUN", "VERB", "ADJ", "ADV"}
-        return any(pos.startswith(prefix) for prefix in content_word_prefixes) 
+        return any(pos.startswith(prefix) for prefix in content_word_prefixes)
+    
+
+    def _create_token_lemma_map(self, tokens: List[str], lemmas: List[str]) -> Dict[str, str]:
+        """Creează o mapare de la tokeni la leme"""
+        token_lemma_map = {}
+        if len(tokens) != len(lemmas):
+            logger.warning("Lista de tokeni și lista de leme au lungimi diferite")
+            return token_lemma_map
+
+        for token, lemma in zip(tokens, lemmas):
+            token_lemma_map[token] = lemma
+
+        logger.debug(f"Creată mapă lemma cu {len(token_lemma_map)} intrări")
+        return token_lemma_map
+
+    def _get_lemma(self, token: str, token_lemma_map: Dict[str, str]) -> str:
+        """Returnează lema asociată unui token, încercând variații de capitalizare"""
+        lemma = token_lemma_map.get(token, "")
+
+        if not lemma and token.lower() in token_lemma_map:
+            lemma = token_lemma_map[token.lower()]
+
+        if not lemma and token.capitalize() in token_lemma_map:
+            lemma = token_lemma_map[token.capitalize()]
+
+        return lemma

@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from ..utils.config import settings
 from .types import ProcessedTextDict
 from .service import checkService
-from .processor_methods import tokenize, pos_tagging, dependency_parsing, named_entity_recognition
+from .processor_methods import tokenize, pos_tagging, dependency_parsing, named_entity_recognition, get_lemmas
 
 logger = logging.getLogger('backend.preprocessing.main')
 
@@ -59,6 +59,10 @@ def analyze_text(text: str, base_url: Optional[str] = None) -> ProcessedTextDict
         
         logger.debug("Performing named entity recognition")
         ner_results = named_entity_recognition(text, base_url)
+
+        logger.debug("Creating lemmas...")
+        lemmas = get_lemmas(text)
+        print(f"Lemmasx: {lemmas}")
         
         logger.debug("Creating annotated text")
         annotated_text = ""
@@ -76,7 +80,8 @@ def analyze_text(text: str, base_url: Optional[str] = None) -> ProcessedTextDict
                 "tokens": tokens,
                 "pos_tags": pos_tags,
                 "dependencies": dependencies,
-                "ner_results": ner_results
+                "ner_results": ner_results,
+                "lemmas": lemmas
             }
         }
             

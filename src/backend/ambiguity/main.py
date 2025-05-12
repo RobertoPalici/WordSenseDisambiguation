@@ -73,13 +73,17 @@ def process_text(
         processed_result = analyze_text(text)
         tokens = processed_result["analysis"]["tokens"]
         pos_tags = processed_result["analysis"]["pos_tags"]
+        print(f"Pos tags: {pos_tags}")
     else:
         module_logger.debug("Using provided preprocessed data")
         tokens = preprocessed_data["tokens"]
         pos_tags = preprocessed_data["pos_tags"]
+        lemmas = preprocessed_data["lemmas"]
+        print(f"Pos tags: {pos_tags}")
+
     
     module_logger.debug("Detecting ambiguities")
-    ambiguous_words: List[AmbiguousWordDict] = detector.detect_ambiguities(tokens, pos_tags)
+    ambiguous_words: List[AmbiguousWordDict] = detector.detect_ambiguities(tokens, pos_tags,lemmas)
     
     module_logger.debug("Generating recommendations")
     recommendations: List[RecommendationDict] = []

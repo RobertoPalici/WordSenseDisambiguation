@@ -7,13 +7,14 @@ including tokenization, POS tagging, named entity recognition, and dependency pa
 
 import requests
 import logging
+import spacy
 from typing_extensions import Optional
 
 from ..utils.config import settings
 from .types import (
-    TokenList, POSTagList, DependencyList, NERList
+    TokenList, POSTagList, DependencyList, NERList, LemmaList
 )
-
+nlp = spacy.load("ro_core_news_sm")
 logger = logging.getLogger('backend.preprocessing.processor_methods')
 
 def tokenize(text: str, base_url: Optional[str] = None) -> TokenList:
@@ -64,51 +65,76 @@ def tokenize(text: str, base_url: Optional[str] = None) -> TokenList:
         return []
 
 def pos_tagging(text: str, base_url: Optional[str] = None) -> POSTagList:
-    """
-    Perform POS tagging on text
+    # """
+    # Perform POS tagging on text
     
+    # Args:
+    #     text: Text to analyze
+    #     base_url: Optional base URL for the Teprolin service
+        
+    # Returns:
+    #     List of (word, pos_tag) tuples
+    # """
+    # base_url = base_url or settings.TEPROLIN_URL
+    # doc = nlp(text)
+    # for token in doc:
+    #     print(f"Test: {token.text} -> {token.lemma_} ({token.pos_})")
+    # try:
+    #     logger.debug(f"POS tagging text: {text[:50]}...")
+        
+    #     data = {
+    #         "text": text,
+    #         "exec": "pos-tagging"
+    #     }
+        
+    #     response = requests.post(
+    #         f"{base_url}/process",
+    #         data=data
+    #     )
+        
+    #     if response.status_code == 200:
+    #         result = response.json()
+    #         pos_tags = []
+            
+    #         tagged_data = result.get("teprolin-result", {}).get("tokenized", [])
+    #         if tagged_data:
+    #             # Flatten and extract word and POS
+    #             pos_tags = [(word["_wordform"], word["_ctg"]) 
+    #                         for sentence in tagged_data 
+    #                         for word in sentence]
+            
+    #         logger.debug(f"Tagged {len(pos_tags)} words")
+
+    #         return pos_tags
+    #     else:
+    #         logger.error(f"POS tagging failed: {response.status_code} - {response.text}")
+    #         return []
+            
+    # except Exception as e:
+    #     logger.error(f"Error during POS tagging: {str(e)}")
+    #     return []
+        """
+    Perform POS tagging on text using spaCy instead of Teprolin
+
     Args:
         text: Text to analyze
-        base_url: Optional base URL for the Teprolin service
+        base_url: Unused, kept for interface compatibility
         
     Returns:
         List of (word, pos_tag) tuples
     """
-    base_url = base_url or settings.TEPROLIN_URL
-    
-    try:
-        logger.debug(f"POS tagging text: {text[:50]}...")
-        
-        data = {
-            "text": text,
-            "exec": "pos-tagging"
-        }
-        
-        response = requests.post(
-            f"{base_url}/process",
-            data=data
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            pos_tags = []
-            
-            tagged_data = result.get("teprolin-result", {}).get("tokenized", [])
-            if tagged_data:
-                # Flatten and extract word and POS
-                pos_tags = [(word["_wordform"], word["_ctg"]) 
-                            for sentence in tagged_data 
-                            for word in sentence]
-            
-            logger.debug(f"Tagged {len(pos_tags)} words")
+        try:
+            logger.debug(f"POS tagging text with spaCy: {text[:50]}...")
+
+            doc = nlp(text)
+            pos_tags = [(token.text, token.pos_) for token in doc]
+
+            logger.debug(f"Tagged {len(pos_tags)} words with spaCy")
             return pos_tags
-        else:
-            logger.error(f"POS tagging failed: {response.status_code} - {response.text}")
+
+        except Exception as e:
+            logger.error(f"Error during spaCy POS tagging: {str(e)}")
             return []
-            
-    except Exception as e:
-        logger.error(f"Error during POS tagging: {str(e)}")
-        return []
 
 def named_entity_recognition(text: str, base_url: Optional[str] = None) -> NERList:
     """
@@ -206,4 +232,26 @@ def dependency_parsing(text: str, base_url: Optional[str] = None) -> DependencyL
             
     except Exception as e:
         logger.error(f"Error during dependency parsing: {str(e)}")
+        return []
+
+def get_lemmas(text: str) -> LemmaList:
+    """
+    Get lemmas for each token in the text using spaCy
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of lemmas
+    """
+    try:
+        logger.debug(f"Getting lemmas for text: {text[:50]}...")
+        
+        doc = nlp(text)
+        lemmas = [token.lemma_ for token in doc]
+        
+        logger.debug(f"Extracted {len(lemmas)} lemmas")
+        return lemmas
+    except Exception as e:
+        logger.error(f"Error during lemma extraction: {str(e)}")
         return []
