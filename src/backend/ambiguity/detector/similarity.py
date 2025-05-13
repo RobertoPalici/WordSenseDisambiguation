@@ -36,7 +36,7 @@ def calculate_context_embedding(
         Context embedding for the token
     """
     # Use a window of text around the token for context
-    window_size: int = 5
+    window_size: int = 7
     start_idx: int = max(0, token_index - window_size)
     end_idx: int = min(len(tokens), token_index + window_size + 1)
     context: str = " ".join(tokens[start_idx:end_idx])
@@ -64,6 +64,7 @@ def calculate_definition_embeddings(
     for definition in definitions:
         if definition:
             embedding: np.ndarray = model_manager.get_embedding(definition, model_name).numpy()
+            embedding = embedding / np.linalg.norm(embedding)  # Normalize the embedding
             embeddings.append(embedding)
     
     return embeddings
